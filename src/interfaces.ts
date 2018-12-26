@@ -11,6 +11,7 @@ export interface CV {
   placeOfBirth: string
   citizenship: string
   picture: string
+  github?: string
   body: Node
 }
 

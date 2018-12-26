@@ -11,20 +11,20 @@ function labelPhone(number: string) {
   return `${groups.country} (0)${groups.code} ${groups.number}`
 }
 
-function text(doc: PDFKit.PDFDocument, file: string, size: number, text = '', continued = false) {
-  return doc.font(file).fillColor('black').fontSize(size).text(text.replace(/\s+/g, ' '), { underline: false, continued })
+function text(doc: PDFKit.PDFDocument, file: string, size: number, text = '', options: PDFKit.Mixins.TextOptions = { underline: false, continued: false }) {
+  return doc.font(file).fillColor('black').fontSize(size).text(text.replace(/\s+/g, ' '), options)
 }
 
-function fontBold(doc: PDFKit.PDFDocument, str: string, continued = false) {
-  return text(doc, 'fonts/SourceSansPro-Semibold.ttf', 12, str, continued)
+function fontBold(doc: PDFKit.PDFDocument, str: string, options: PDFKit.Mixins.TextOptions = { underline: false, continued: false }) {
+  return text(doc, 'fonts/SourceSansPro-Semibold.ttf', 12, str, options)
 }
 
-function fontItalic(doc: PDFKit.PDFDocument, str: string, continued = false) {
-  return text(doc, 'fonts/SourceSansPro-It.ttf', 12, str, continued)
+function fontItalic(doc: PDFKit.PDFDocument, str: string, options: PDFKit.Mixins.TextOptions = { underline: false, continued: false }) {
+  return text(doc, 'fonts/SourceSansPro-It.ttf', 12, str, options)
 }
 
-function fontRegular(doc: PDFKit.PDFDocument, str: string, continued = false) {
-  return text(doc, 'fonts/SourceSansPro-Regular.ttf', 12, str, continued)
+function fontRegular(doc: PDFKit.PDFDocument, str: string, options: PDFKit.Mixins.TextOptions = { underline: false, continued: false }) {
+  return text(doc, 'fonts/SourceSansPro-Regular.ttf', 12, str, options)
 }
 
 function capitalize(text: string): string {
@@ -91,7 +91,7 @@ function formatSectionTitle(lang: string, text: string) {
   try {
     return formatDate(lang, text)
   } catch (e) {
-    return translate(lang, text)
+    return capitalize(translate(lang, text))
   }
 }
 
@@ -110,11 +110,11 @@ function renderParagraph(doc: PDFKit.PDFDocument, node: Node): void {
     const continued = index < node.children.length - 1
     switch (child.type) {
       case Kind.Strong: {
-        fontBold(doc, child.children[0].value, continued)
+        fontBold(doc, child.children[0].value, { underline: false, continued })
         break
       }
       case Kind.Emphasis: {
-        fontItalic(doc, child.children[0].value, continued)
+        fontItalic(doc, child.children[0].value, { underline: false, continued })
         break
       }
       case Kind.Link: {
@@ -126,7 +126,7 @@ function renderParagraph(doc: PDFKit.PDFDocument, node: Node): void {
         break
       }
       case Kind.Str: {
-        fontRegular(doc, child.value, continued)
+        fontRegular(doc, child.value, { underline: false, continued })
         break
       }
       default: {
@@ -179,14 +179,14 @@ function renderChild(doc: PDFKit.PDFDocument, lang: string, child: Node): void {
   }
 }
 
-function line(doc: PDFKit.PDFDocument, lang: string, key: string, value: string) {
+function line(doc: PDFKit.PDFDocument, lang: string, key: string, value: string, link?: string) {
   fontBold(doc, capitalize(translate(lang, key)))
     .moveUp(1)
   const x = doc.x
   doc.x = 200
 
   for (const line of value.split(/\n/g)) {
-    fontRegular(doc, line)
+    fontRegular(doc, line, { underline: false, continued: false, link })
   }
 
   doc.x = x
@@ -227,17 +227,19 @@ export function renderPDF(cv: CV, stream: Writable) {
     .fontSize(18)
     .text(fullName)
 
-  line(doc, cv.lang, 'complete name', `${cv.firstName} ${cv.middleName} ${cv.lastName}`)
+  if (cv.middleName)
+    line(doc, cv.lang, 'complete name', `${cv.firstName} ${cv.middleName} ${cv.lastName}`)
   line(doc, cv.lang, 'birth', `${formatter.format(cv.dateOfBirth)} ${translate(cv.lang, 'in')} ${translate(cv.lang, cv.placeOfBirth)}`)
   line(doc, cv.lang, 'address', cv.address)
+  if (cv.citizenship)
+    line(doc, cv.lang, 'citizenship', translate(cv.lang, cv.citizenship))
 
-  const phoneLabel = labelPhone(cv.phone)
-  const height = doc.heightOfString(phoneLabel)
-  const link = phoneLabel.replace(/[^\d+]/g, '')
-  line(doc, cv.lang, 'phone', phoneLabel)
-    .link(200, doc.y - height, doc.widthOfString(phoneLabel), height, `tel:${link}`)
-  line(doc, cv.lang, 'email', cv.email)
-  line(doc, cv.lang, 'citizenship', translate(cv.lang, cv.citizenship))
+  if (cv.phone)
+    line(doc, cv.lang, 'phone', labelPhone(cv.phone), `tel:${cv.phone.replace(/[^\d+]/g, '')}`)
+  if (cv.email)
+    line(doc, cv.lang, 'email', cv.email, `mailto:${cv.email}`)
+  if (cv.github)
+    line(doc, cv.lang, 'github', `@${cv.github}`, `https://github.com/${cv.github}`)
 
   doc.y = nextY
   for (const child of cv.body.children) {
