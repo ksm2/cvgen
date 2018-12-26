@@ -1,0 +1,7 @@
+# Input / Output
+input/
+*.pdf
+
+# Node.JS
+node_modules/
+*.log

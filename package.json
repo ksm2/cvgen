@@ -1,0 +1,24 @@
+{
+  "name": "cvgen",
+  "version": "1.0.0",
+  "description": "Generator for résumés",
+  "repository": "https://github.com/ksm2/csvgen",
+  "author": "Konstantin Möllers",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "front-matter": "^3.0.1",
+    "markdown-to-ast": "^6.0.3",
+    "pdfkit": "^0.8.3",
+    "showdown": "^1.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.18",
+    "@types/pdfkit": "^0.7.36",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.2.2"
+  },
+  "scripts": {
+    "build": "ts-node scripts/build"
+  }
+}
