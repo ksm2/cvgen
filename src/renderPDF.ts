@@ -2,6 +2,7 @@ import path from 'path'
 import PDFDocument from 'pdfkit'
 import { Writable } from 'stream'
 import { CV, Kind, Node } from './interfaces'
+import { setMetadata } from './setMetadata'
 import { translate } from './translate'
 
 const MM_TO_PT = 2.83465
@@ -193,6 +194,7 @@ function line(doc: PDFKit.PDFDocument, lang: string, key: string, value: string,
   return doc
 }
 
+
 export function renderPDF(cv: CV, stream: Writable) {
   // Create a document
   const margins = { left: 25 * MM_TO_PT, right: 25 * MM_TO_PT, top: 20 * MM_TO_PT, bottom: 20 * MM_TO_PT }
@@ -200,14 +202,7 @@ export function renderPDF(cv: CV, stream: Writable) {
 
   doc.pipe(stream)
 
-  const fullName = `${cv.firstName} ${cv.lastName}`
-  doc.info.Author = fullName
-  doc.info.Title = translate(cv.lang, 'résumé of {}').replace('{}', fullName)
-  doc.info.Keywords = 'résumé, cv, info'
-  doc.info.CreationDate = new Date()
-  doc.info.ModDate = new Date()
-  doc.info.Producer = 'https://github.com/ksm2/cvgen'
-  doc.info.Creator = 'https://github.com/ksm2/cvgen'
+  setMetadata(cv, doc)
 
   const y = doc.y
   const x = doc.x
@@ -226,7 +221,7 @@ export function renderPDF(cv: CV, stream: Writable) {
   doc.font('fonts/ScopeOne-Regular.ttf')
     .fillColor('#6799cc')
     .fontSize(18)
-    .text(fullName)
+    .text(cv.fullName)
 
   if (cv.middleName)
     line(doc, cv.lang, 'complete name', `${cv.firstName} ${cv.middleName} ${cv.lastName}`)

@@ -7,8 +7,9 @@ export async function readFile(filename: string): Promise<CV> {
   const file = await fs.promises.readFile(filename, 'utf8')
   const { attributes, body: markdown } = frontMatter(file)
   const body = markdownToAst.parse(markdown)
+  const fullName = `${attributes.firstName} ${attributes.lastName}`
 
   attributes.dateOfBirth = new Date(attributes.dateOfBirth)
 
-  return { ...attributes, filename, body }
+  return { ...attributes, filename, fullName, body }
 }

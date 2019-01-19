@@ -4,6 +4,7 @@ export interface CV {
   firstName: string
   middleName: string
   lastName: string
+  fullName: string
   email: string
   phone: string
   address: string
