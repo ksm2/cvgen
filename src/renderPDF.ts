@@ -36,7 +36,7 @@ function capitalize(text: string): string {
 
 function renderHeading(doc: PDFKit.PDFDocument, lang: string, text: string): void {
   doc.font('fonts/ScopeOne-Regular.ttf')
-    .fillColor('#EF3340')
+    .fillColor('#6799cc')
     .fontSize(16)
 
   const label = capitalize(translate(lang, text))
@@ -46,7 +46,7 @@ function renderHeading(doc: PDFKit.PDFDocument, lang: string, text: string): voi
 
   const w = doc.heightOfString(label) / 2
   doc
-    .strokeColor('#EF3340')
+    .strokeColor('#6799cc')
     .lineWidth(1)
     .moveTo(doc.x + doc.widthOfString(label) + 10, doc.y - w)
     .lineTo(doc.page.width - doc.page.margins.right, doc.y - w)
@@ -120,7 +120,7 @@ function renderParagraph(doc: PDFKit.PDFDocument, node: Node): void {
       case Kind.Link: {
         const label = child.children[0].value
         doc.font('fonts/SourceSansPro-Regular.ttf')
-          .fillColor('#EF3340')
+          .fillColor('#6799cc')
           .fontSize(12)
           .text(label, { continued, link: child.url, underline: true })
         break
@@ -213,17 +213,18 @@ export function renderPDF(cv: CV, stream: Writable) {
   const x = doc.x
   doc.x = doc.page.width - doc.page.margins.right - 125
   doc.image(path.resolve(path.dirname(cv.filename), cv.picture), {
-    fit: [125, 150],
+    fit: [125, 125],
     align: 'right'
   } as any)
   doc.x = x
-  const nextY = doc.y
+
+  const nextY = 210
 
   doc.y = y
   const formatter = new Intl.DateTimeFormat(cv.lang, { day: '2-digit', month: '2-digit', year: 'numeric' })
 
   doc.font('fonts/ScopeOne-Regular.ttf')
-    .fillColor('#EF3340')
+    .fillColor('#6799cc')
     .fontSize(18)
     .text(fullName)
 
