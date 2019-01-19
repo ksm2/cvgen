@@ -206,8 +206,8 @@ export function renderPDF(cv: CV, stream: Writable) {
   doc.info.Keywords = 'résumé, cv, info'
   doc.info.CreationDate = new Date()
   doc.info.ModDate = new Date()
-  doc.info.Producer = 'https://github.com/ksm2/csvgen'
-  doc.info.Creator = 'https://github.com/ksm2/csvgen'
+  doc.info.Producer = 'https://github.com/ksm2/cvgen'
+  doc.info.Creator = 'https://github.com/ksm2/cvgen'
 
   const y = doc.y
   const x = doc.x

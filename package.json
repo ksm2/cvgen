@@ -2,7 +2,7 @@
   "name": "cvgen",
   "version": "1.0.0",
   "description": "Generator for résumés",
-  "repository": "https://github.com/ksm2/csvgen",
+  "repository": "https://github.com/ksm2/cvgen",
   "author": "Konstantin Möllers",
   "license": "MIT",
   "private": false,
