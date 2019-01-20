@@ -5,6 +5,7 @@ export interface CV {
   middleName: string
   lastName: string
   fullName: string
+  title: string
   email: string
   phone: string
   address: string
@@ -13,7 +14,19 @@ export interface CV {
   citizenship: string
   picture: string
   github?: string
+  linkedin?: string
+  experience: Entry[]
+  education: Entry[]
+  languageSkills: { [language: string]: number }
   body: Node
+}
+
+export interface Entry {
+  position: string
+  institution: string
+  startedAt: string
+  endsAt: string
+  description: Node[]
 }
 
 export enum Kind {

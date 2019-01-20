@@ -1,11 +1,19 @@
 import path from 'path'
 import PDFDocument from 'pdfkit'
 import { Writable } from 'stream'
-import { CV, Kind, Node } from './interfaces'
+import { formatDate } from './formatDate'
+import { formatDateSpan } from './formatDateSpan'
+import { icon } from './icon'
+import { CV, Entry, Kind, Node } from './interfaces'
 import { setMetadata } from './setMetadata'
 import { translate } from './translate'
 
 const MM_TO_PT = 2.83465
+const DEFAULT_COLOR = '#212529'
+const DEFAULT_FONTSIZE = 11
+const ACCENT_COLOR = '#6ca66c'
+
+let lastTimeline: number | null = null
 
 function labelPhone(number: string) {
   const { groups = {} } = /^(?<country>\+\d+)-(?<code>\d+)-(?<number>\d+)$/.exec(number)!
@@ -13,19 +21,19 @@ function labelPhone(number: string) {
 }
 
 function text(doc: PDFKit.PDFDocument, file: string, size: number, text = '', options: PDFKit.Mixins.TextOptions = { underline: false, continued: false }) {
-  return doc.font(file).fillColor('black').fontSize(size).text(text.replace(/\s+/g, ' '), options)
+  return doc.font(file).fillColor(DEFAULT_COLOR).fontSize(size).text(text.replace(/\s+/g, ' '), options)
 }
 
 function fontBold(doc: PDFKit.PDFDocument, str: string, options: PDFKit.Mixins.TextOptions = { underline: false, continued: false }) {
-  return text(doc, 'fonts/SourceSansPro-Semibold.ttf', 12, str, options)
+  return text(doc, 'fonts/SourceSansPro-Semibold.ttf', DEFAULT_FONTSIZE, str, options)
 }
 
 function fontItalic(doc: PDFKit.PDFDocument, str: string, options: PDFKit.Mixins.TextOptions = { underline: false, continued: false }) {
-  return text(doc, 'fonts/SourceSansPro-It.ttf', 12, str, options)
+  return text(doc, 'fonts/SourceSansPro-It.ttf', DEFAULT_FONTSIZE, str, options)
 }
 
 function fontRegular(doc: PDFKit.PDFDocument, str: string, options: PDFKit.Mixins.TextOptions = { underline: false, continued: false }) {
-  return text(doc, 'fonts/SourceSansPro-Regular.ttf', 12, str, options)
+  return text(doc, 'fonts/SourceSansPro-Regular.ttf', DEFAULT_FONTSIZE, str, options)
 }
 
 function capitalize(text: string): string {
@@ -37,48 +45,21 @@ function capitalize(text: string): string {
 
 function renderHeading(doc: PDFKit.PDFDocument, lang: string, text: string): void {
   doc.font('fonts/ScopeOne-Regular.ttf')
-    .fillColor('#6799cc')
-    .fontSize(16)
+    .fillColor(DEFAULT_COLOR)
+    .fontSize(14)
 
   const label = capitalize(translate(lang, text))
   doc
-    .moveDown(0.5)
+    // .moveDown(0.5)
     .text(label)
 
   const w = doc.heightOfString(label) / 2
   doc
-    .strokeColor('#6799cc')
+    .strokeColor(DEFAULT_COLOR)
     .lineWidth(1)
     .moveTo(doc.x + doc.widthOfString(label) + 10, doc.y - w)
     .lineTo(doc.page.width - doc.page.margins.right, doc.y - w)
     .stroke()
-}
-
-function formatDate(lang: string, text: string) {
-  if (!text) {
-    return ''
-  }
-
-  if (text === 'today') {
-    return translate(lang, text)
-  }
-
-  if (text.match(/(\d{4})\/(\d{2})/)) {
-    const formatter = new Intl.DateTimeFormat(lang, { month: 'short', year: 'numeric' })
-    return formatter.format(new Date(+RegExp.$1, +RegExp.$2 - 1, 1, 0, 0, 0, 0))
-  }
-
-  if (text.match(/(\d{4})/)) {
-    return RegExp.$1
-  }
-
-  throw new TypeError(`Cannot format date "${text}"`)
-}
-
-function formatDateSpan(lang: string, text: string) {
-  const [from, to] = text.split(/\s*-\s*/, 2)
-
-  return `${formatDate(lang, from)} – ${formatDate(lang, to)}`
 }
 
 function formatSectionTitle(lang: string, text: string) {
@@ -96,13 +77,31 @@ function formatSectionTitle(lang: string, text: string) {
   }
 }
 
+function renderPosition(doc: PDFKit.PDFDocument, text: string): void {
+  doc.font('fonts/SourceSansPro-Semibold.ttf')
+    .fillColor(ACCENT_COLOR)
+    .fontSize(DEFAULT_FONTSIZE)
+    .moveDown(0.5)
+    .text(text, { characterSpacing: 1.0 })
+}
+
+function renderInstitutionDate(doc: PDFKit.PDFDocument, institution: string, from: string, to: string): void {
+  doc.font('fonts/ScopeOne-Regular.ttf')
+    .fillColor(DEFAULT_COLOR)
+    .fontSize(10)
+
+    .text(institution)
+    .moveUp(1)
+    .text(`${from} – ${to}`, { align: 'right' })
+}
+
 function renderSectionTitle(doc: PDFKit.PDFDocument, lang: string, text: string): void {
   doc.font('fonts/SourceSansPro-Semibold.ttf')
-    .fillColor('black')
-    .fontSize(12)
+    .fillColor(DEFAULT_COLOR)
+    .fontSize(DEFAULT_FONTSIZE)
     .moveDown(0.5)
     .text(formatSectionTitle(lang, text))
-    .moveUp(1)
+    .moveUp(1.0)
 }
 
 function renderParagraph(doc: PDFKit.PDFDocument, node: Node): void {
@@ -121,8 +120,8 @@ function renderParagraph(doc: PDFKit.PDFDocument, node: Node): void {
       case Kind.Link: {
         const label = child.children[0].value
         doc.font('fonts/SourceSansPro-Regular.ttf')
-          .fillColor('#6799cc')
-          .fontSize(12)
+          .fillColor(ACCENT_COLOR)
+          .fontSize(DEFAULT_FONTSIZE)
           .text(label, { continued, link: child.url, underline: true })
         break
       }
@@ -139,7 +138,7 @@ function renderParagraph(doc: PDFKit.PDFDocument, node: Node): void {
 
 function renderList(doc: PDFKit.PDFDocument, node: Node): void {
   for (const child of node.children) {
-    doc.ellipse(doc.x + 3, doc.y + 8, 2, 2).fill('black')
+    doc.ellipse(doc.x + 3, doc.y + 8, 2, 2).fill(DEFAULT_COLOR)
     doc.x += 15
     child.children.forEach(subchild => renderSubchild(doc, subchild))
     doc.x -= 15
@@ -162,10 +161,14 @@ function renderSubchild(doc: PDFKit.PDFDocument, child: Node) {
   }
 }
 
-function renderChild(doc: PDFKit.PDFDocument, lang: string, child: Node): void {
+function renderChild(doc: PDFKit.PDFDocument, lang: string, child: Node, first = false): void {
+  const left = doc.x
   switch (child.type) {
     case Kind.Header:
       if (child.depth === 1) {
+        if (!first) {
+          doc.y += 20
+        }
         renderHeading(doc, lang, child.children[0].value)
       } else if (child.depth === 2) {
         renderSectionTitle(doc, lang, child.children[0].value)
@@ -173,73 +176,199 @@ function renderChild(doc: PDFKit.PDFDocument, lang: string, child: Node): void {
       break
     default: {
       const oldX = doc.x
-      doc.x = 200
+      doc.x = left + 100
       renderSubchild(doc, child)
       doc.x = oldX
     }
   }
 }
 
-function line(doc: PDFKit.PDFDocument, lang: string, key: string, value: string, link?: string) {
+function renderEntries(doc: PDFKit.PDFDocument, lang: string, entries: Entry[], heading: string) {
+  renderHeading(doc, lang, heading)
+  for (const entry of entries) {
+    const x = doc.x
+    const y = doc.y
+
+    if (lastTimeline) {
+      doc
+        .moveTo(x + 3, lastTimeline + 3)
+        .lineTo(x + 3, y + 9)
+        .dash(3, { space: 3 })
+        .lineWidth(0.5)
+        .stroke(DEFAULT_COLOR)
+        .lineWidth(1)
+        .undash()
+    }
+
+    doc.ellipse(x + 3, y + 14, 2).stroke(DEFAULT_COLOR)
+    lastTimeline = y + 16
+    doc.x += 12
+    doc.y = y
+
+    renderPosition(doc, entry.position)
+    renderInstitutionDate(doc, entry.institution, entry.startedAt, entry.endsAt)
+    doc.y += 2
+
+    for (const node of entry.description) {
+      renderSubchild(doc, node)
+    }
+
+    doc.x = x
+    doc.y += 5
+  }
+
+  if (lastTimeline) {
+    doc
+      .moveTo(doc.x + 3, lastTimeline + 3)
+      .lineTo(doc.x + 3, doc.y)
+      .dash(3, { space: 3 })
+      .lineWidth(0.5)
+      .stroke(DEFAULT_COLOR)
+      .lineWidth(1)
+      .undash()
+    lastTimeline = null
+  }
+}
+
+function line(doc: PDFKit.PDFDocument, lang: string, width: number, key: string, iconName: string, value: string, link?: string) {
+  doc
+    .save()
+    .translate(doc.x, doc.y)
+    .scale(0.4)
+    .path(icon(iconName))
+    .fill(ACCENT_COLOR)
+    .restore()
+
+  doc.x += 16
   fontBold(doc, capitalize(translate(lang, key)))
-    .moveUp(1)
-  const x = doc.x
-  doc.x = 200
 
   for (const line of value.split(/\n/g)) {
     fontRegular(doc, line, { underline: false, continued: false, link })
   }
+  doc.x -= 16
 
-  doc.x = x
+  doc.y += 8
+
   return doc
 }
 
+function renderLeftColumn(cv: CV, doc: PDFKit.PDFDocument, width: number) {
+  const lang = cv.lang
+  const formatter = new Intl.DateTimeFormat(lang, { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+  if (cv.middleName)
+    line(doc, lang, width, 'complete name', '4-user', `${cv.firstName} ${cv.middleName} ${cv.lastName}`)
+  line(doc, lang, width, 'birth', '270-cake', `${formatter.format(cv.dateOfBirth)} ${translate(lang, 'in')} ${translate(lang, cv.placeOfBirth)}`)
+  line(doc, lang, width, 'address', '21-home', cv.address)
+  if (cv.citizenship)
+    line(doc, lang, width, 'citizenship', '264-flag-waving', translate(lang, cv.citizenship))
+
+  if (cv.phone)
+    line(doc, lang, width, 'phone', '166-mobile-phone', labelPhone(cv.phone), `tel:${cv.phone.replace(/[^\d+]/g, '')}`)
+  if (cv.email)
+    line(doc, lang, width, 'email', '11-envelope', cv.email, `mailto:${cv.email}`)
+  if (cv.github)
+    line(doc, lang, width, 'github', 'github', `@${cv.github}`, `https://github.com/${cv.github}`)
+  if (cv.linkedin)
+    line(doc, lang, width, 'linkedin', 'linkedin', `linkedin.com/in/${cv.linkedin}`, `https://www.linkedin.com/in/${cv.linkedin}`)
+
+  const offsetX = doc.x
+  const offsetY = doc.y + 20
+  doc.x = offsetX
+  doc.y = offsetY
+  doc.font('fonts/SourceSansPro-Semibold.ttf')
+    .fillColor(DEFAULT_COLOR)
+    .fontSize(DEFAULT_FONTSIZE)
+    .text(capitalize(translate(lang, 'language skills')))
+
+  let i = 0
+  for (const [language, skill] of Object.entries(cv.languageSkills)) {
+    doc.x = offsetX + (i % 2) * (width / 2)
+    doc.y = offsetY + 16 + Math.floor(i / 2) * 32
+
+    doc.font('fonts/SourceSansPro-Regular.ttf')
+      .fillColor(ACCENT_COLOR)
+      .fontSize(DEFAULT_FONTSIZE)
+      .text(capitalize(translate(lang, language)))
+
+    for (let s = 0; s < 5; s += 1) {
+      doc.ellipse(doc.x + s * 10 + 4, doc.y + 7, 3).stroke()
+    }
+
+    let s
+    for (s = 0; s < Math.floor(skill / 2); s += 1) {
+      doc.ellipse(doc.x + s * 10 + 4, doc.y + 7, 3).fillColor(DEFAULT_COLOR).fill()
+    }
+
+    if (skill % 2 === 1) {
+      doc.save()
+        .rect(doc.x + s * 10 + 1, doc.y + 4, 3, 6).clip()
+        .ellipse(doc.x + s * 10 + 4, doc.y + 7, 3).fillColor(DEFAULT_COLOR).fill()
+        .restore()
+    }
+
+    i += 1
+  }
+}
 
 export function renderPDF(cv: CV, stream: Writable) {
   // Create a document
-  const margins = { left: 25 * MM_TO_PT, right: 25 * MM_TO_PT, top: 20 * MM_TO_PT, bottom: 20 * MM_TO_PT }
+  const margins = { left: 20 * MM_TO_PT, right: 20 * MM_TO_PT, top: 20 * MM_TO_PT, bottom: 20 * MM_TO_PT }
   const doc = new PDFDocument({ size: [210 * MM_TO_PT, 297 * MM_TO_PT], margins })
+  const { page } = doc
 
   doc.pipe(stream)
 
+  // PDF metadata
   setMetadata(cv, doc)
 
-  const y = doc.y
+  // Width calculation
+  const columnGap = 10 * MM_TO_PT
+  // page.width = page.margins.left + page.margins.right + columnGap + 3*column1
+  const column1 = (page.width - (page.margins.left + page.margins.right + columnGap)) / 3
+  const column2 = column1 * 2
+
   const x = doc.x
-  doc.x = doc.page.width - doc.page.margins.right - 125
-  doc.image(path.resolve(path.dirname(cv.filename), cv.picture), {
-    fit: [125, 125],
-    align: 'right'
-  } as any)
+  doc.x = page.margins.left
+  doc.y = page.margins.top
+
+  // Render Name
+  doc.font('fonts/SourceSansPro-Semibold.ttf')
+    .fillColor(DEFAULT_COLOR)
+    .fontSize(14)
+    .text(cv.fullName.toUpperCase(), { align: 'center', width: column1, characterSpacing: 0.5 })
+  doc.font('fonts/SourceSansPro-Semibold.ttf')
+    .fillColor(ACCENT_COLOR)
+    .fontSize(DEFAULT_FONTSIZE)
+    .text(cv.title, { align: 'center', width: column1 })
+
+  // Render picture
+  const picturePath = path.resolve(path.dirname(cv.filename), cv.picture)
   doc.x = x
+  doc.y = page.margins.top + 45
+  const radius = column1 / 2
+  doc
+    .save()
+    .ellipse(doc.x + radius, doc.y + radius, radius)
+    .clip()
+    .image(picturePath, { fit: [column1, column1] })
+    .restore()
 
-  const nextY = 210
+  doc.x = x
+  doc.y = page.margins.top + column1 + 60
+  renderLeftColumn(cv, doc, column1)
 
-  doc.y = y
-  const formatter = new Intl.DateTimeFormat(cv.lang, { day: '2-digit', month: '2-digit', year: 'numeric' })
+  doc.x = page.margins.left + column1 + columnGap
+  doc.y = page.margins.top
+  renderEntries(doc, cv.lang, cv.experience, 'experience')
+  doc.y += 20
+  renderEntries(doc, cv.lang, cv.education, 'education')
 
-  doc.font('fonts/ScopeOne-Regular.ttf')
-    .fillColor('#6799cc')
-    .fontSize(18)
-    .text(cv.fullName)
-
-  if (cv.middleName)
-    line(doc, cv.lang, 'complete name', `${cv.firstName} ${cv.middleName} ${cv.lastName}`)
-  line(doc, cv.lang, 'birth', `${formatter.format(cv.dateOfBirth)} ${translate(cv.lang, 'in')} ${translate(cv.lang, cv.placeOfBirth)}`)
-  line(doc, cv.lang, 'address', cv.address)
-  if (cv.citizenship)
-    line(doc, cv.lang, 'citizenship', translate(cv.lang, cv.citizenship))
-
-  if (cv.phone)
-    line(doc, cv.lang, 'phone', labelPhone(cv.phone), `tel:${cv.phone.replace(/[^\d+]/g, '')}`)
-  if (cv.email)
-    line(doc, cv.lang, 'email', cv.email, `mailto:${cv.email}`)
-  if (cv.github)
-    line(doc, cv.lang, 'github', `@${cv.github}`, `https://github.com/${cv.github}`)
-
-  doc.y = nextY
+  doc.addPage()
+  let first = true
   for (const child of cv.body.children) {
-    renderChild(doc, cv.lang, child)
+    renderChild(doc, cv.lang, child, first)
+    first = false
   }
 
   // Finalize PDF file
