@@ -356,7 +356,7 @@ export function renderPDF(cv: CV, stream: Writable) {
     .restore()
 
   doc.x = x
-  doc.y = page.margins.top + column1 + 60
+  doc.y = page.margins.top + column1 + 70
   renderLeftColumn(cv, doc, column1)
 
   doc.x = page.margins.left + column1 + columnGap
