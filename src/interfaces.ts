@@ -1,10 +1,8 @@
-export interface CV {
-  filename: string
+export interface FrontMatter {
   lang: string
   firstName: string
-  middleName: string
   lastName: string
-  fullName: string
+  middleName: string
   title: string
   email: string
   phone: string
@@ -15,9 +13,14 @@ export interface CV {
   picture: string
   github?: string
   linkedin?: string
+  languageSkills: { [language: string]: number }
+}
+
+export interface CV extends FrontMatter {
+  filename: string
+  fullName: string
   experience: Entry[]
   education: Entry[]
-  languageSkills: { [language: string]: number }
   body: Node
 }
 
