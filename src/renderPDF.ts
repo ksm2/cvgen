@@ -200,12 +200,13 @@ function renderEntries(doc: PDFKit.PDFDocument, lang: string, entries: Entry[], 
         .undash()
     }
 
-    doc.ellipse(x + 3, y + 14, 2).stroke(DEFAULT_COLOR)
-    lastTimeline = y + 16
     doc.x += 12
     doc.y = y
 
     renderPosition(doc, entry.position)
+    doc.ellipse(x + 3, doc.y - 7, 2).stroke(DEFAULT_COLOR)
+    lastTimeline = doc.y - 5
+
     renderInstitutionDate(doc, entry.institution, entry.startedAt, entry.endsAt)
     doc.y += 2
 
@@ -364,7 +365,7 @@ export function renderPDF(cv: CV, stream: Writable) {
   doc.y += 20
   renderEntries(doc, cv.lang, cv.education, 'education')
 
-  doc.addPage()
+  doc.x = page.margins.left
   let first = true
   for (const child of cv.body.children) {
     renderChild(doc, cv.lang, child, first)
