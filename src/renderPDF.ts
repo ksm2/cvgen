@@ -1,12 +1,10 @@
 import path from 'path';
 import PDFDocument from 'pdfkit';
 import { Writable } from 'stream';
-import { formatDate } from './formatDate';
-import { formatDateSpan } from './formatDateSpan';
 import { icon } from './icon';
 import { CV, Entry, Kind, Node } from './interfaces';
 import { setMetadata } from './setMetadata';
-import { translate } from './translate';
+import { capitalize, formatDate, formatDateSpan, labelPhone, translate } from './utils';
 
 const MM_TO_PT = 2.83465;
 const DEFAULT_COLOR = '#212529';
@@ -14,11 +12,6 @@ const DEFAULT_FONTSIZE = 11;
 const ACCENT_COLOR = '#6ca66c';
 
 let lastTimeline: number | null = null;
-
-function labelPhone(number: string) {
-  const { groups = {} } = /^(?<country>\+\d+)-(?<code>\d+)-(?<number>\d+)$/.exec(number)!;
-  return `${groups.country} (0)${groups.code} ${groups.number}`;
-}
 
 function text(
   doc: PDFKit.PDFDocument,
@@ -56,12 +49,6 @@ function fontRegular(
   options: PDFKit.Mixins.TextOptions = { underline: false, continued: false },
 ) {
   return text(doc, 'fonts/SourceSansPro-Regular.ttf', DEFAULT_FONTSIZE, str, options);
-}
-
-function capitalize(text: string): string {
-  if (text) return text[0].toUpperCase() + text.substr(1);
-
-  return '';
 }
 
 function renderHeading(doc: PDFKit.PDFDocument, lang: string, text: string): void {

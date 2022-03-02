@@ -1,5 +1,5 @@
 import { CV } from './interfaces';
-import { translate } from './translate';
+import { translate } from './utils';
 
 /**
  * Sets PDF metadata from the CV.

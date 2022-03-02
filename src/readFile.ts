@@ -1,8 +1,8 @@
 import frontMatter from 'front-matter';
 import fs from 'fs';
 import markdownToAst from 'markdown-to-ast';
-import { formatDate } from './formatDate';
 import { CV, Entry, FrontMatter, Kind, Node } from './interfaces';
+import { formatDate } from './utils';
 
 function readNodes(body: Node[], section: string): [Node[], Node[]] {
   const nodes: Node[] = [];
