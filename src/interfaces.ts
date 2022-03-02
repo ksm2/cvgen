@@ -1,35 +1,35 @@
 export interface FrontMatter {
-  lang: string
-  firstName: string
-  lastName: string
-  middleName: string
-  title: string
-  email: string
-  phone: string
-  address: string
-  dateOfBirth: Date
-  placeOfBirth: string
-  citizenship: string
-  picture: string
-  github?: string
-  linkedin?: string
-  languageSkills: { [language: string]: number }
+  lang: string;
+  firstName: string;
+  lastName: string;
+  middleName: string;
+  title: string;
+  email: string;
+  phone: string;
+  address: string;
+  dateOfBirth: Date;
+  placeOfBirth: string;
+  citizenship: string;
+  picture: string;
+  github?: string;
+  linkedin?: string;
+  languageSkills: { [language: string]: number };
 }
 
 export interface CV extends FrontMatter {
-  filename: string
-  fullName: string
-  experience: Entry[]
-  education: Entry[]
-  body: Node
+  filename: string;
+  fullName: string;
+  experience: Entry[];
+  education: Entry[];
+  body: Node;
 }
 
 export interface Entry {
-  position: string
-  institution: string
-  startedAt: string
-  endsAt: string
-  description: Node[]
+  position: string;
+  institution: string;
+  startedAt: string;
+  endsAt: string;
+  description: Node[];
 }
 
 export enum Kind {
@@ -45,22 +45,22 @@ export enum Kind {
 }
 
 export interface Position {
-  line: number
-  column: number
+  line: number;
+  column: number;
 }
 
 export interface Location {
-  start: Position
-  end: Position
+  start: Position;
+  end: Position;
 }
 
 export interface Node {
-  type: Kind
-  raw: string
-  range: [number, number]
-  loc: Location
-  value?: string
-  children?: Node[]
-  depth?: number
-  url?: string
+  type: Kind;
+  raw: string;
+  range: [number, number];
+  loc: Location;
+  value?: string;
+  children?: Node[];
+  depth?: number;
+  url?: string;
 }
