@@ -1,6 +1,6 @@
 import frontMatter from 'front-matter';
 import fs from 'fs';
-import markdownToAst from 'markdown-to-ast';
+import { parse } from '@textlint/markdown-to-ast';
 import { CV, Entry, FrontMatter, Kind, Node } from './interfaces';
 import { formatDate } from './utils';
 
@@ -79,7 +79,7 @@ export async function readFile(filename: string): Promise<CV> {
   const file = await fs.promises.readFile(filename, 'utf8');
   const { attributes, body: markdown } = frontMatter<FrontMatter>(file);
 
-  const body = markdownToAst.parse(markdown);
+  const body = parse(markdown) as Node;
   const fullName = `${attributes.firstName} ${attributes.lastName}`;
 
   const [experience, newBody1] = readEntries(attributes.lang, body.children, 'experience');

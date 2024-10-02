@@ -57,7 +57,7 @@ export interface Location {
 export interface Node {
   type: Kind;
   raw: string;
-  range: [number, number];
+  range: readonly [number, number];
   loc: Location;
   value?: string;
   children?: Node[];

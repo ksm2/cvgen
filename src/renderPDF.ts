@@ -180,7 +180,7 @@ function renderSubchild(doc: PDFKit.PDFDocument, child: Node) {
 function renderChild(doc: PDFKit.PDFDocument, lang: string, child: Node, first = false): void {
   const left = doc.x;
   switch (child.type) {
-    case Kind.Header:
+    case 'Header':
       if (child.depth === 1) {
         if (!first) {
           doc.y += 20;
