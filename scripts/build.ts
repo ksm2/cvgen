@@ -1,3 +1,4 @@
+#!/usr/bin/env npx ts-node-transpile-only
 import fs from 'fs';
 import path from 'path';
 import { readFile, renderPDF } from '../src';
