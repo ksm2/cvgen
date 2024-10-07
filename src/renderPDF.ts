@@ -11,6 +11,8 @@ const DEFAULT_COLOR = '#212529';
 const DEFAULT_FONTSIZE = 11;
 const ACCENT_COLOR = '#6ca66c';
 
+const fontDir = path.resolve(__dirname, '..', 'fonts');
+
 let lastTimeline: number | null = null;
 
 function text(
@@ -32,7 +34,7 @@ function fontBold(
   str: string,
   options: PDFKit.Mixins.TextOptions = { underline: false, continued: false },
 ) {
-  return text(doc, 'fonts/SourceSansPro-Semibold.ttf', DEFAULT_FONTSIZE, str, options);
+  return text(doc, `${fontDir}/SourceSansPro-Semibold.ttf`, DEFAULT_FONTSIZE, str, options);
 }
 
 function fontItalic(
@@ -40,7 +42,7 @@ function fontItalic(
   str: string,
   options: PDFKit.Mixins.TextOptions = { underline: false, continued: false },
 ) {
-  return text(doc, 'fonts/SourceSansPro-It.ttf', DEFAULT_FONTSIZE, str, options);
+  return text(doc, `${fontDir}/SourceSansPro-It.ttf`, DEFAULT_FONTSIZE, str, options);
 }
 
 function fontRegular(
@@ -48,11 +50,11 @@ function fontRegular(
   str: string,
   options: PDFKit.Mixins.TextOptions = { underline: false, continued: false },
 ) {
-  return text(doc, 'fonts/SourceSansPro-Regular.ttf', DEFAULT_FONTSIZE, str, options);
+  return text(doc, `${fontDir}/SourceSansPro-Regular.ttf`, DEFAULT_FONTSIZE, str, options);
 }
 
 function renderHeading(doc: PDFKit.PDFDocument, lang: string, text: string): void {
-  doc.font('fonts/ScopeOne-Regular.ttf').fillColor(DEFAULT_COLOR).fontSize(14);
+  doc.font(`${fontDir}/ScopeOne-Regular.ttf`).fillColor(DEFAULT_COLOR).fontSize(14);
 
   const label = capitalize(translate(lang, text));
   doc
@@ -84,7 +86,7 @@ function formatSectionTitle(lang: string, text: string) {
 
 function renderPosition(doc: PDFKit.PDFDocument, text: string): void {
   doc
-    .font('fonts/SourceSansPro-Semibold.ttf')
+    .font(`${fontDir}/SourceSansPro-Semibold.ttf`)
     .fillColor(ACCENT_COLOR)
     .fontSize(DEFAULT_FONTSIZE)
     .moveDown(0.5)
@@ -98,7 +100,7 @@ function renderInstitutionDate(
   to: string,
 ): void {
   doc
-    .font('fonts/ScopeOne-Regular.ttf')
+    .font(`${fontDir}/ScopeOne-Regular.ttf`)
     .fillColor(DEFAULT_COLOR)
     .fontSize(10)
 
@@ -109,7 +111,7 @@ function renderInstitutionDate(
 
 function renderSectionTitle(doc: PDFKit.PDFDocument, lang: string, text: string): void {
   doc
-    .font('fonts/SourceSansPro-Semibold.ttf')
+    .font(`${fontDir}/SourceSansPro-Semibold.ttf`)
     .fillColor(DEFAULT_COLOR)
     .fontSize(DEFAULT_FONTSIZE)
     .moveDown(0.5)
@@ -133,7 +135,7 @@ function renderParagraph(doc: PDFKit.PDFDocument, node: Node): void {
       case Kind.Link: {
         const label = child.children[0].value;
         doc
-          .font('fonts/SourceSansPro-Regular.ttf')
+          .font(`${fontDir}/SourceSansPro-Regular.ttf`)
           .fillColor(ACCENT_COLOR)
           .fontSize(DEFAULT_FONTSIZE)
           .text(label, { continued, link: child.url, underline: true });
@@ -332,7 +334,7 @@ function renderLeftColumn(cv: CV, doc: PDFKit.PDFDocument, width: number) {
   doc.x = offsetX;
   doc.y = offsetY;
   doc
-    .font('fonts/SourceSansPro-Semibold.ttf')
+    .font(`${fontDir}/SourceSansPro-Semibold.ttf`)
     .fillColor(DEFAULT_COLOR)
     .fontSize(DEFAULT_FONTSIZE)
     .text(capitalize(translate(lang, 'language skills')));
@@ -343,7 +345,7 @@ function renderLeftColumn(cv: CV, doc: PDFKit.PDFDocument, width: number) {
     doc.y = offsetY + 16 + Math.floor(i / 2) * 32;
 
     doc
-      .font('fonts/SourceSansPro-Regular.ttf')
+      .font(`${fontDir}/SourceSansPro-Regular.ttf`)
       .fillColor(ACCENT_COLOR)
       .fontSize(DEFAULT_FONTSIZE)
       .text(capitalize(translate(lang, language)));
@@ -403,12 +405,12 @@ export function renderPDF(cv: CV, stream: Writable) {
 
   // Render Name
   doc
-    .font('fonts/SourceSansPro-Semibold.ttf')
+    .font(`${fontDir}/SourceSansPro-Semibold.ttf`)
     .fillColor(DEFAULT_COLOR)
     .fontSize(14)
     .text(cv.fullName.toUpperCase(), { align: 'center', width: column1, characterSpacing: 0.5 });
   doc
-    .font('fonts/SourceSansPro-Semibold.ttf')
+    .font(`${fontDir}/SourceSansPro-Semibold.ttf`)
     .fillColor(ACCENT_COLOR)
     .fontSize(DEFAULT_FONTSIZE)
     .text(cv.title, { align: 'center', width: column1 });
